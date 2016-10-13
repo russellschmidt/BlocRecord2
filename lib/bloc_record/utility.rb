@@ -35,6 +35,23 @@ module BlocRecord
 			options
 		end
 
+		def instance_variables_to_hash(obj)
+			# this converts the dynamic instance variables we created into a hash, stripping off the '@'
+			# opposite of Base::initialize which turns a hash into instance variables
+			Hash[obj.instance_variables.map{ |var| ["#{var.to_s.delete('@')}", obj.instance_variable_get(var.to_s)]}]
+		end
+
+		def reload_obj(dirty_obj)
+			# This method first calls the find class on the id, assigning the db object to persisted_obj
+			persisted_obj = dirty_obj.class.find(dirty_obj.id)
+			# Then we iterate over the instance variables which instance_variables returns as an array
+			# we get the instance variable value from the database and save that to our local object (dirty_obj)
+			# this makes sure we have a nice clean current copy of a record, overwriting unsaved changes.
+			dirty_obj.instance_variables.each do |instance_variable|
+				dirty_obj.instance_variable_set(instance_variable, persisted_obj.instance_variable_get(instance_variable))
+			end
+		end
+
 	end
 
 end
