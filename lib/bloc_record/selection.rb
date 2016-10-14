@@ -67,38 +67,36 @@ module Selection
 		else
 			take_one
 		end
+	end
+
+	# first() and last() return first or last object in the database
+	def first
+		row = connection.get_first_row <<-SQL
+			SELECT #{columns.join ","} FROM #{table}
+			ORDER BY id
+			ASC LIMIT 1;
+		SQL
+
+		init_object_from_row(row)
+	end
+
+	def last
+		row = connection.get_first_row <<-SQL
+			SELECT #{columns.join ","} FROM #{table}
+			ORDER BY id
+			DESC LIMIT 1;
+		SQL
+
+		init_object_from_row(row)
+	end
 
 
-		# first() and last() return first or last object in the database
-		def first
-			row = connection.get_first_row <<-SQL
-				SELECT #{columns.join ","} FROM #{table}
-				ORDER BY id
-				ASC LIMIT 1;
-			SQL
+	def all
+		rows = connection.execute <<-SQL
+			SELECT #{columns.join ","} FROM #{table};
+		SQL
 
-			init_object_from_row(row)
-		end
-
-		def last
-			row = connection.get_first_row <<-SQL
-				SELECT #{columns.join ","} FROM #{table}
-				ORDER BY id
-				DESC LIMIT 1;
-			SQL
-
-			init_object_from_row(row)
-		end
-
-
-		def all
-			rows = connection.execute <<-SQL
-				SELECT #{columns.join ","} FROM #{table};
-			SQL
-
-			rows_to_array(rows)
-		end
-
+		rows_to_array(rows)
 	end
 
 
