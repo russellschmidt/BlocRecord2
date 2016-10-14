@@ -29,17 +29,31 @@ module Selection
 		# if id < min or id > max
 		# stop
 		# else
-		
 
 		if ids.length == 1
-			find_one(ids.first)
+			if ids >= max || ids <= min
+				puts "record id out of range"
+			else
+				find_one(ids.first)
+			end
 		else
-			rows = connection.execute <<-SQL
-				SELECT #{columns.join ","} FROM #{table}
-				WHERE id IN (#{ids.join(",")});
-			SQL
+			ids_in_range = true
+			ids.each do |id|
+				if id < min || id > max
+					ids_in_range = false
+				end
+			end
 
-			rows_to_array(rows)
+			if ids_in_range
+				rows = connection.execute <<-SQL
+					SELECT #{columns.join ","} FROM #{table}
+					WHERE id IN (#{ids.join(",")});
+				SQL
+
+				rows_to_array(rows)
+			else
+				puts "ids out of range"
+			end
 		end
 	end
 
