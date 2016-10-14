@@ -90,13 +90,13 @@ module Selection
 			init_object_from_row(row)
 		end
 
-		def rows_to_array(rows)
-			# this method maps an array of rows to an array of corresponding model objects
-			# columns is an array of the column name and type. 
-			# Zip combines in the returned array of values.
-			# [col1, val1]
-			# Hash 
-			rows.map { |row| new(Hash[columns.zip(row)]) }
+
+		def all
+			rows = connection.execute <<-SQL
+				SELECT #{columns.join ","} FROM #{table};
+			SQL
+
+			rows_to_array(rows)
 		end
 
 	end
@@ -111,5 +111,11 @@ module Selection
 			data = Hash[columns.zip(row)]
 			new(data)
 		end
+	end
+
+	def rows_to_array(rows)
+		# this method maps an array of rows to an array of matched model objects.
+		# the return is an array of record objects, where each object is from 
+		rows.map { |row| new(Hash[columns.zip(row)]) }
 	end
 end
