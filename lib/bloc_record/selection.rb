@@ -1,11 +1,36 @@
 require 'sqlite3'
 
 module Selection
+	def get_min
+		min = connection.execute <<-SQL
+			SELECT id FROM #{table}
+			ORDER BY id ASC LIMIT 1;
+		SQL
+		min[0][0]
+	end
+
+	def get_max
+		max = connection.execute <<-SQL
+			SELECT id FROM #{table}
+			ORDER BY id DESC LIMIT 1;
+		SQL
+		max[0][0]
+	end
+
+
 	def find(*ids)
 		# if there is just one id, we call find_one, which returns a model object
 		# otherwise we pass in the arguments
 		# then use join to convert them into a comma-delimited string that SQL will like
 		# Then we call rows_to_array to do as the name says, return the found rows as an array
+
+		# error handling for ids - make sure its between min and max
+		# iterate through ids
+		# if id < min or id > max
+		# stop
+		# else
+		
+
 		if ids.length == 1
 			find_one(ids.first)
 		else
