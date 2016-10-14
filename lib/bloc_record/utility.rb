@@ -42,8 +42,8 @@ module BlocRecord
 		end
 
 		def reload_obj(dirty_obj)
-			# This method first calls the find class on the id, assigning the db object to persisted_obj
-			persisted_obj = dirty_obj.class.find(dirty_obj.id)
+			# This method first calls the find_one method on the id, assigning the db object to persisted_obj
+			persisted_obj = dirty_obj.class.find_one(dirty_obj.id)
 			# Then we iterate over the instance variables which instance_variables returns as an array
 			# we get the instance variable value from the database and save that to our local object (dirty_obj)
 			# this makes sure we have a nice clean current copy of a record, overwriting unsaved changes.
