@@ -7,12 +7,16 @@ module BlocRecord
 		extend self
 
 		def underscore(camel_cased_word)
-			# converts CamelCase to SQL-friendly snake case
-      string = camel_cased_word.gsub(/::/, '/')
-      string.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
-      string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-      string.tr!("-", "_")
-      string.downcase
+			if camel_cased_word.is_a? String
+				# converts CamelCase to SQL-friendly snake case
+	      string = camel_cased_word.gsub(/::/, '/')
+	      string.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
+	      string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+	      string.tr!("-", "_")
+	      string.downcase
+	    else
+	    	puts "Not a valid data type to convert to snake_case"
+	    end
 		end
 
 		def sql_strings(value)

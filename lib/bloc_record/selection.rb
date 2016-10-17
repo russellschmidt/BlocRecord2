@@ -17,34 +17,39 @@ module Selection
 		max[0][0]
 	end
 
-
 	def find(*ids)
 		# if there is just one id, we call find_one, which returns a model object
 		# otherwise we pass in the arguments
 		# then use join to convert them into a comma-delimited string that SQL will like
 		# Then we call rows_to_array to do as the name says, return the found rows as an array
 
-		# error handling for ids - make sure its between min and max
-		# iterate through ids
-		# if id < min or id > max
-		# stop
-		# else
+		# error handling for ids - make sure its within range of min and max
 
 		if ids.length == 1
-			if ids >= max || ids <= min
-				puts "record id out of range"
+			if ids.is_a? Integer
+				if ids >= max || ids <= min
+					puts "record id out of range"
+				else
+					find_one(ids.first)
+				end
 			else
-				find_one(ids.first)
+				puts "Invalid id data type"
 			end
 		else
 			ids_in_range = true
+			ids_valid = true
 			ids.each do |id|
-				if id < min || id > max
-					ids_in_range = false
+				if id.is_a? Integer
+					if id < min || id > max
+						ids_in_range = false
+					end
+				else
+					ids_valid = false
+					puts "Invalid id data type"
 				end
 			end
 
-			if ids_in_range
+			if ids_in_range && ids_valid
 				rows = connection.execute <<-SQL
 					SELECT #{columns.join ","} FROM #{table}
 					WHERE id IN (#{ids.join(",")});
@@ -73,12 +78,20 @@ module Selection
 	def find_by(attribute, value)
 		# here we return the first match where attribute == value for the record
 		# we rely on init_object_from_row to return an object
-		row = connection.get_first_row <<-SQL
-			SELECT #{columns.join ","} FROM #{table}
-			WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
-		SQL
 
-		init_object_from_row(row)
+		# first, check for proper data types / not null
+
+		if attribute && attribute.is_a?(String) && value
+		
+			row = connection.get_first_row <<-SQL
+				SELECT #{columns.join ","} FROM #{table}
+				WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
+			SQL
+
+			init_object_from_row(row)
+		else
+			puts "attribute must be a string and value cannot be null for find_by"
+		end
 	end
 
 
@@ -97,14 +110,26 @@ module Selection
 	def take(num=1)
 		# similar to take_one() but with a variable number of return random items as an array
 		# if single num or no num passed in, returns object courtesy take_one()
-		if num > 1
-			rows = connection.execute <<-SQL
-				SELECT #{columns.join ","} FROM #{table}
-				ORDER BY random()
-				LIMIT #{num};
-			SQL
+
+		# let's make sure num is an integer
+		# if it is an integer, lets make sure it is a positive number and less than set count
+
+		if num.is_a? Integer
+			if num > 0 && num <= self.count
+				if num > 1
+					rows = connection.execute <<-SQL
+						SELECT #{columns.join ","} FROM #{table}
+						ORDER BY random()
+						LIMIT #{num};
+					SQL
+				else
+					take_one
+				end
+			else
+				puts "Number of items to take is out of range"
+			end
 		else
-			take_one
+			puts "Argument is not a valid number"
 		end
 	end
 
