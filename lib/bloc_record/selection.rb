@@ -164,6 +164,14 @@ module Selection
 	end
 
 
+	def method_missing(method, *arguments, &block)
+		if method == "find_by_name"
+			find_by(:name, *arguments)
+		else
+			puts "no such method found"
+		end
+	end
+
 	private
 
 	def init_object_from_row(row)
