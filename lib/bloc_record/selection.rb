@@ -230,6 +230,35 @@ module Selection
 		end
 	end
 
+	def where(*args)
+		# Array - .count here filters for arrays vs other data types
+		#  .shift pops the first element off the array, shrinking it, and returns it
+		# String accepts ("phone_number = '555-222-1010'") input
+		#  with the string case, params is nil. We put the full string in the expression variable
+		# For Hash, we convert Symbols in keys to Strings
+		#  then we convert values to SQL-friendly strings and connect multiple clauses with AND
+		if args.count > 1
+			expression = args.shift
+			params = args
+		else
+			case args.first
+			when String
+				expression = args.first
+			when Hash
+				expression_hash = BlocRecord::Utility.convert_keys(args.first)
+				expression = expression_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" AND ")
+			end
+		end
+
+		sql = <<-SQL
+			SELECT #{columns.join ","} FROM #{table}
+			WHERE #{expression};
+		SQL
+
+		rows = connection.execute(sql, params)
+		rows_to_array(rows)
+	end
+
 
 	private
 
