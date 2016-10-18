@@ -176,8 +176,8 @@ module Selection
 		# set batch of records to array rows
 		# if batch_size not nil and is an integer and not 0 or less, set Limit on record 
 		if attribute && attribute.is_a?(String) && value
-			
-			if batch_size && batch_size.is_a? Integer
+	
+			if batch_size && batch_size.is_a?(Integer)
 				if batch_size < 1
 					puts "Invalid batch size"
 				else
@@ -194,16 +194,16 @@ module Selection
 					SELECT #{columns.join ","} FROM #{table}
 					WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
 				SQL
+			
+				objArray = rows_to_array(rows)
+				transformedArray = []
+
+				for obj in objArray
+					transformedArray << block.call(obj)
+				end
+
+				transformedArray
 			end
-
-			objArray = rows_to_array(rows)
-			transformedArray = []
-
-			for obj in objArray
-				transformedArray << block.call(obj)
-			end
-
-			transformedArray
 		else
 			puts "Attribute must be a string and value cannot be null for find_each"
 		end
@@ -211,7 +211,7 @@ module Selection
 
 
 	def find_in_batches(start, batch_size, &block)
-		if start && batch_size && start.is_a? Integer && batch_size.is_a? Integer
+		if start && batch_size && start.is_a?(Integer) && batch_size.is_a?(Integer)
 			if start >= 0 && batch_size > 0
 				rows = connection.execute <<-SQL
 					SELECT #{columns.join ","} FROM #{table}
