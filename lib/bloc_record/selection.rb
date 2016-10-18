@@ -260,6 +260,54 @@ module Selection
 	end
 
 
+	def order(*args)
+		# .count filters for arrays, to_s handles with String, Symbol cases
+		if args.count > 1
+			order = args.join(",")
+		else
+			order = args.first.to_s
+		end
+
+		rows = connection.execute <<-SQL
+			SELECT * FROM #{table}
+			ORDER BY #{order};
+		SQL
+
+		rows_to_array
+	end
+
+
+	def join(*args)
+		# check for arrays first. 
+		# 
+		# weird else then if/elsif construction.
+		#
+		# if allows users to pass in a JOIN statement wholesale without error checking yikes
+		# elsif is great for hash but requires the table to use standard naming convention
+		# foreign key -> table1.table2_id = table2.id  <- primary key
+
+		if args.count > 1
+			joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id=#{table}.id" }.join(" ")
+			rows = connection.execute <<-SQL
+				SELECT * FROM #{table} #{joins}
+			SQL
+		else
+			if arg.class == String
+				rows = connection.execute <<-SQL
+					SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(arg)};
+				SQL
+			elsif arg.class == Symbol
+				rows = connection.execute <<-SQL
+					SELECT * FROM #{table}
+					INNER JOIN #{arg} ON #{arg}.#{table}_id = #{table}.id
+				SQL
+
+			rows_to_array(rows)
+			end
+		end
+	end
+
+
 	private
 
 	def init_object_from_row(row)
