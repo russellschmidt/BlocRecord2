@@ -172,6 +172,65 @@ module Selection
 		end
 	end
 
+	def find_each(attribute, value, batch_size=nil, &block)
+		# set batch of records to array rows
+		# if batch_size not nil and is an integer and not 0 or less, set Limit on record 
+		if attribute && attribute.is_a?(String) && value
+			
+			if batch_size && batch_size.is_a? Integer
+				if batch_size < 1
+					puts "Invalid batch size"
+				else
+					rows = connection.execute <<-SQL
+						SELECT #{columns.join ","} FROM #{table}
+						WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)}
+						LIMIT #{batch_size};
+					SQL
+				end
+			elsif batch_size
+				puts "Invalid data type for batch size parameter. Try again with a positive integer."
+			else				
+				rows = connection.execute <<-SQL
+					SELECT #{columns.join ","} FROM #{table}
+					WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
+				SQL
+			end
+
+			objArray = rows_to_array(rows)
+			transformedArray = []
+
+			for obj in objArray
+				transformedArray << block.call(obj)
+			end
+
+			transformedArray
+		else
+			puts "Attribute must be a string and value cannot be null for find_each"
+		end
+	end
+
+
+	def find_in_batches(start, batch_size, &block)
+		if start && batch_size && start.is_a? Integer && batch_size.is_a? Integer
+			if start >= 0 && batch_size > 0
+				rows = connection.execute <<-SQL
+					SELECT #{columns.join ","} FROM #{table}
+					LIMIT #{batch_size} 
+					OFFSET #{start};
+				SQL
+
+				objArray = rows_to_array(rows)
+
+				yield(objArray, batch_size)
+			else
+				puts "start must be at least zero and batch size greater than zero"
+			end
+		else
+			puts "start, batch_size arguments can't be nil and must be integers."
+		end
+	end
+
+
 	private
 
 	def init_object_from_row(row)
