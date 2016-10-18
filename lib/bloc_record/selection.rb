@@ -81,7 +81,7 @@ module Selection
 
 		# first, check for proper data types / not null
 
-		if attribute && attribute.is_a?(String) && value
+		if attribute && attribute.is_a?(Symbol) && value
 		
 			row = connection.get_first_row <<-SQL
 				SELECT #{columns.join ","} FROM #{table}
