@@ -292,19 +292,20 @@ module Selection
 				SELECT * FROM #{table} #{joins}
 			SQL
 		else
-			if arg.class == String
+			case args.first
+			when String
 				rows = connection.execute <<-SQL
-					SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(arg)};
+					SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
 				SQL
-			elsif arg.class == Symbol
+			when Symbol
 				rows = connection.execute <<-SQL
 					SELECT * FROM #{table}
-					INNER JOIN #{arg} ON #{arg}.#{table}_id = #{table}.id
+					INNER JOIN #{args.first} ON #{args.first}.#{table}_id=#{table}.id;
 				SQL
-
-			rows_to_array(rows)
 			end
 		end
+
+		rows_to_array(rows)
 	end
 
 
