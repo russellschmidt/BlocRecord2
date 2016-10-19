@@ -26,15 +26,16 @@ module Selection
 		# error handling for ids - make sure its within range of min and max
 
 		if ids.length == 1
-			if ids.is_a? Integer
-				if ids >= max || ids <= min
-					puts "record id out of range"
-				else
-					find_one(ids.first)
-				end
-			else
-				puts "Invalid id data type"
-			end
+			find_one(ids.first)
+			# if ids.is_a?(Integer) || ids.is_a?(Fixnum)
+				# if ids >= max || ids <= min
+				# 	puts "record id out of range"
+				# else
+					# find_one(ids.first)
+				# end
+			# else
+				# puts "Invalid id data type"
+			# end
 		else
 			ids_in_range = true
 			ids_valid = true
@@ -66,9 +67,10 @@ module Selection
 	def find_one(id)
 		# straight-forward SELECT that returns the row matching the id passed in
 		# By using columns instead of (*) we can manipulate this method later
+
 		row = connection.get_first_row <<-SQL
 			SELECT #{columns.join ","} FROM #{table}
-			WHERE id = #{id};
+			WHERE id=#{id};
 		SQL
 
 		init_object_from_row(row)
