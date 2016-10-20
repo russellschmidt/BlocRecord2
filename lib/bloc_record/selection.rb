@@ -24,6 +24,7 @@ module Selection
 		# Then we call rows_to_array to do as the name says, return the found rows as an array
 
 		# error handling for ids - make sure its within range of min and max
+		# future implementation - check if id in range and not deleted
 
 		if ids.length == 1
 			if ids.is_a? Integer
@@ -165,6 +166,11 @@ module Selection
 
 
 	def method_missing(method, *arguments, &block)
+		# use regex to strip out find_by
+		# use regex to find out the rest of the method name
+		# rest of method name -> is the column name to pass to find_by
+		# if name not found, figure out how to then call method_missing normally 
+
 		if method == "find_by_name"
 			find_by(:name, *arguments)
 		else
@@ -214,10 +220,10 @@ module Selection
 				yield rows_to_array(rows)
 
 			else
-				puts "start must be at least zero and batch size greater than zero"
+				puts "start: must be at least zero and batch_size: greater than zero"
 			end
 		else
-			puts "start, batch_size arguments can't be nil and must be integers."
+			puts "start:, batch_size: arguments can't be nil and must be integers."
 		end
 	end
 
