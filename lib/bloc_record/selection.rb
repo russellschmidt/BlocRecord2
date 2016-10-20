@@ -270,6 +270,9 @@ module Selection
 			order = args.first.to_s
 		end
 
+		# if symbol, we want to clean up "{:foo=>:bar, :doo=>:ood}"
+		order = order.gsub(/[{:}]/,'').gsub(/=>/,' ')
+
 		rows = connection.execute <<-SQL
 			SELECT * FROM #{table}
 			ORDER BY #{order};
