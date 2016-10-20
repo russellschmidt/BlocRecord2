@@ -166,15 +166,11 @@ module Selection
 
 
 	def method_missing(method, *arguments, &block)
-		# use regex to strip out find_by
-		# use regex to find out the rest of the method name
-		# rest of method name -> is the column name to pass to find_by
-		# if name not found, figure out how to then call method_missing normally 
-
-		if method == "find_by_name"
-			find_by(:name, *arguments)
+		if method.downcase.match(/find_by_/)
+			columnName = method.slice( ('find_by_'.length)..(method.length) ).to_sym
+			find_by(columnName, *arguments)
 		else
-			puts "no such method found"
+			super(method, *arguments, &block)
 		end
 	end
 
