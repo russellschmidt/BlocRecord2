@@ -278,7 +278,7 @@ module Selection
 			ORDER BY #{order};
 		SQL
 
-		rows_to_array
+		rows_to_array(rows)
 	end
 
 
