@@ -310,11 +310,11 @@ module Selection
 	end
 
 	def joins(*args)
+		# requires naming convention of foreign_key to be table.foreigntable_id = foreigntable.id
 		if args.first.is_a? Hash
 
 			args.each do |key, value|
-				key = key.to_s
-				value = value.to_s
+				value.to_sym if value.is_a? String
 				joins += "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id "
 				joins += "INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id "
 			end
