@@ -261,7 +261,6 @@ module Selection
 		rows_to_array(rows)
 	end
 
-
 	def order(*args)
 		# .count filters for arrays, to_s handles with String, Symbol cases
 		if args.count > 1
@@ -284,17 +283,14 @@ module Selection
 
 	def join(*args)
 		# check for arrays first. 
-		# 
-		# weird else then if/elsif construction.
 		#
-		# if allows users to pass in a JOIN statement wholesale without error checking yikes
-		# elsif is great for hash but requires the table to use standard naming convention
+		# elsif is great for hash but requires the table to use standard naming conventions
 		# foreign key -> table1.table2_id = table2.id  <- primary key
 
 		if args.count > 1
 			joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id=#{table}.id" }.join(" ")
 			rows = connection.execute <<-SQL
-				SELECT * FROM #{table} #{joins}
+				SELECT * FROM #{table} #{joins};
 			SQL
 		else
 			case args.first
@@ -311,6 +307,25 @@ module Selection
 		end
 
 		rows_to_array(rows)
+	end
+
+	def joins(*args)
+		if args.first.is_a? Hash
+
+			args.each do |key, value|
+				key = key.to_s
+				value = value.to_s
+				joins += "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id "
+				joins += "INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id "
+			end
+
+			rows = connection.execute <<-SQL
+				SELECT * FROM #{table}
+				#{joins};
+			SQL
+		else
+			puts "#joins method requires a hash"
+		end
 	end
 
 
