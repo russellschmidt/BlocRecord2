@@ -28,6 +28,7 @@ module Persistence
 			# data is a hash of attributes and values, with .zip converting arguments to arrays
 			# so data ends up being a collection of hashes of column_name: [val1, val2...]
 			data = Hash[attributes.zip attrs.values]
+			
 			# last_insert_rowid[0][0] returns the 1st element of the most recent successful insert
 			# so here we are setting the hash id value to the SQL row ID.
 			data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]

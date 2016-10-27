@@ -7,12 +7,16 @@ module BlocRecord
 		extend self
 
 		def underscore(camel_cased_word)
-			# converts CamelCase to SQL-friendly snake case
-      string = camel_cased_word.gsub(/::/, '/')
-      string.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
-      string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-      string.tr!("-", "_")
-      string.downcase
+			if camel_cased_word.is_a? String
+				# converts CamelCase to SQL-friendly snake case
+	      string = camel_cased_word.gsub(/::/, '/')
+	      string.gsub!(/([A-Z]+)([A-Z][a-z])/,'\1_\2')
+	      string.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+	      string.tr!("-", "_")
+	      string.downcase
+	    else
+	    	puts "Not a valid data type to convert to snake_case"
+	    end
 		end
 
 		def sql_strings(value)
@@ -42,8 +46,8 @@ module BlocRecord
 		end
 
 		def reload_obj(dirty_obj)
-			# This method first calls the find class on the id, assigning the db object to persisted_obj
-			persisted_obj = dirty_obj.class.find(dirty_obj.id)
+			# This method first calls the find_one method on the id, assigning the db object to persisted_obj
+			persisted_obj = dirty_obj.class.find_one(dirty_obj.id)
 			# Then we iterate over the instance variables which instance_variables returns as an array
 			# we get the instance variable value from the database and save that to our local object (dirty_obj)
 			# this makes sure we have a nice clean current copy of a record, overwriting unsaved changes.

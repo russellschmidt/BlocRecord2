@@ -9,10 +9,10 @@ module BlocRecord
 		# grab the modules from the files in 'require' above in this class
 		# include -> adds to instance (instance methods)
 		# extend -> adds to class (class methods)
-		include Persistence
-		extend Selection
-		extend Schema 
-		extend Connection
+    include Persistence
+    extend Selection
+    extend Schema
+    extend Connection
 
 		def initialize(options={})
 			# convert the passed in hash 'options' from symbols to strings
