@@ -343,6 +343,9 @@ module Selection
 	def rows_to_array(rows)
 		# this method maps an array of rows to an array of matched model objects.
 		# the return is an array of record objects, where each object is from 
-		rows.map { |row| new(Hash[columns.zip(row)]) }
+		#rows.map { |row| new(Hash[columns.zip(row)]) }
+		collection = BlocRecord::Collection.new
+		rows.each { |row| collection << new(Hash[columns.zip(row)]) }
+		collection
 	end
 end

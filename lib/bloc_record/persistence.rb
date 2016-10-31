@@ -36,6 +36,35 @@ module Persistence
 			new(data)
 		end
 
+
+		def update(ids, updates)
+			# convert non-id parameters to an array. Does 'updates' need a splat operator?
+			updates = BlocRecord::Utility.convert_keys(updates)
+			updates.delete "id"
+
+			# we create an array of strings of format KEY=VALUE
+			updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+
+			# make the WHERE clause dynamic - if omitted, update applies to all records
+
+			if ids.class == Fixnum
+				where_clause = "WHERE id = #{ids};"
+			elsif ids.class == Array
+				where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")};"
+			else
+				where_clause = ";"
+			end
+
+			# Note the closing semicolon is included in the variable `where_clause`
+			connection.execute <<-SQL
+				UPDATE #{table}
+				SET #{updates_array * ","} #{where_clause}
+			SQL
+
+			true
+		end
+
+
 		def save!
 			# here we grab all of the column names from the database object's instance variables
 			# and set the column name to the (now SQL-ready) value in a comma-separated list,
@@ -68,45 +97,23 @@ module Persistence
 		end
 
 
+		def update_all(updates)
+			# we pass in nil for the id which in update will drop the WHERE clause (see: ternary)
+			update(nil, updates)
+		end
+
+
 		def update_attribute(attribute, value)
 			# we pass in the attribute as a symbol
 			# then, we pass in the current object's id and turn the updated attribute and value into a hash
 			# in order to then call #update, passing these arguments in
 			self.class.update(self.id, { attribute => value })
-		end
+		end		
+	end
 
-
-		def update_attributes(updates)
-			# updates ought to take the form of `attr: "value", attr2: "value2",...`
-			self.class.update(self.id, updates)
-		end
-
-
-		def update(id, updates)
-			# convert non-id parameters to an array. Does 'updates' need a splat operator?
-			updates = BlocRecord::Utility.convert_keys(updates)
-			updates.delete "id"
-
-			# we create an array of strings of format KEY=VALUE
-			updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
-
-			# make the WHERE clause dynamic - if ommitted, update applies to all records
-			where_clause = id.nil? ? ";" : "WHERE id = #{id};"
-
-			# Note the closing semicolon is included in the variable `where_clause`
-			connection.execute <<-SQL
-				UPDATE #{table}
-				SET #{updates_array * ","} #{where_clause}
-			SQL
-
-			true
-		end
-
-
-		def update_all(updates)
-			# we pass in nil for the id which in update will drop the WHERE clause (see: ternary)
-			update(nil, updates)
-		end
-		
+	def update_attributes(updates)
+		# updates ought to take the form of `attr: "value", attr2: "value2",...`
+		self.class.update(self.id, updates)
 	end
 end
+
