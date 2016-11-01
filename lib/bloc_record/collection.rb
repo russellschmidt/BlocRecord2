@@ -17,18 +17,37 @@ module BlocRecord
 		end
 
 
-		def take
+		def take(num=1)
 			# create an array of all of the ids in our db
-			# capture a random 
-
+			# capture a random number
+			# return object
+			if num.is_a? Fixnum
+				if num < 1
+					puts "#take requires an integer of 1 or higher"
+					false
+				else
+					ids = self.map(&:id)
+					if num > ids.count
+						puts "#take can't sample more items than are in the database"
+						false
+					else
+						return self.first.class.find(ids.sample(num))				
+					end
+				end
+			else
+				puts "#take requires an integer argument"
+				false
+			end
 		end
 
 
-		def where()
+		def where(attr)
+
 		end
 
 
 		def not()
+
 		end
 	end
 end
