@@ -44,10 +44,9 @@ module BlocRecord
 		def where(arg)
 			# arg ought to be a hash of form {name: 'Bob'}
 			if arg.is_a? Hash
-				# we want to grab the attr(ibute) and value, check for nil on value, and call #where
-				attr = arg.keys.first.to_sym
-				value = arg[attr].to_s
-				return self.first.class.where({attr => value}) unless value.nil?
+				# we want to grab the attr(ibute) and value, check for nil (return all), or kick out bad parameters
+				arg_clean = self.first.class.convert_keys(arg)
+				return self.first.class.where(arg_clean)
 			elsif arg.nil?
 				return self.first.class.all
 			else
@@ -61,8 +60,9 @@ module BlocRecord
 			# arg ought ot be a hash of form {name: 'Bob'}
 			# follows #where without arguments (which returns all - see this file, #where)
 			if arg.is_a? Hash
-				attr = arg.keys.first.to_sym
-				value = arg[attr].to_s
+				arg_clean = self.first.class.convert_keys(arg)
+				attr = arg.keys.first
+				value = arg[attr]
 				
 				rows = connection.execute <<-SQL
 					SELECT #{columns.join ","} FROM #{table}
