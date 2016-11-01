@@ -38,28 +38,60 @@ module Persistence
 
 
 		def update(ids, updates)
-			# convert non-id parameters to an array. Does 'updates' need a splat operator?
-			updates = BlocRecord::Utility.convert_keys(updates)
-			updates.delete "id"
+			# if updates is an array already, it is the multiple record update case (chkpt 5, q1)
+			if updates.is_a? Array && updates.is_a? Array
+				
+				attributes = updates.each.keys
+				values = updates.each.values
 
-			# we create an array of strings of format KEY=VALUE
-			updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+				# check that we don't have any nil values in 'values'
+				if values.flatten.count < attributes.count
+					puts "Cannot update an address book entry to empty or nil value"
+					return false
+				else
 
-			# make the WHERE clause dynamic - if omitted, update applies to all records
+					# put ids, updates into an array of arrays [[id1,attr1,val1],[id2,attr2,val2]...]
+					updates_array = ids.zip(attributes, values)
 
-			if ids.class == Fixnum
-				where_clause = "WHERE id = #{ids};"
-			elsif ids.class == Array
-				where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")};"
+					# iterate over the array of arrays
+					# # use 'if' sql statement, format:  
+					# # # name = IF(id=1, 'Bob'), 
+					# # # email= IF(id=2, 'bob@aol.com')..."
+					sql_updates << updates_array.each do |row|
+						"#{row[1]}=IF(id=#{row[0]}, '#{row[2]}'"
+					end
+
+					connection.execute <<-SQL
+						UPDATE #{table} 
+						SET #{sql_updates.join(",")}
+						WHERE id IN (#{ids.join(",")});
+					SQL
+
 			else
-				where_clause = ";"
-			end
+				# convert non-id parameters to an array (original checkpoint work)
+				updates = BlocRecord::Utility.convert_keys(updates)
+				updates.delete "id"
+			
 
-			# Note the closing semicolon is included in the variable `where_clause`
-			connection.execute <<-SQL
-				UPDATE #{table}
-				SET #{updates_array * ","} #{where_clause}
-			SQL
+				# we create an array of strings of format KEY=VALUE
+				updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+
+				# make the WHERE clause dynamic - if omitted, update applies to all records
+
+				if ids.class == Fixnum
+					where_clause = "WHERE id = #{ids};"
+				elsif ids.class == Array
+					where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")};"
+				else
+					where_clause = ";"
+				end
+
+				# Note the closing semicolon is included in the variable `where_clause`
+				connection.execute <<-SQL
+					UPDATE #{table}
+					SET #{updates_array * ","} #{where_clause}
+				SQL
+			end
 
 			true
 		end
