@@ -58,7 +58,7 @@ module Persistence
 					# # # name = IF(id=1, 'Bob'), 
 					# # # email= IF(id=2, 'bob@aol.com')..."
 					sql_updates << updates_array.each do |row|
-						"#{row[1]}=IF(id=#{row[0]}, '#{row[2]}'"
+						"#{row[1]}=IF(id=#{row[0]},'#{row[2]}'"
 					end
 
 					connection.execute <<-SQL
@@ -71,7 +71,6 @@ module Persistence
 				# convert non-id parameters to an array (original checkpoint work)
 				updates = BlocRecord::Utility.convert_keys(updates)
 				updates.delete "id"
-			
 
 				# we create an array of strings of format KEY=VALUE
 				updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
@@ -109,8 +108,25 @@ module Persistence
 			# in order to then call #update, passing these arguments in
 			self.class.update(self.id, { attribute => value })
 		end		
+
+		def method_missing(method_name, *args)
+			# find if method_name contains 'update'
+			# check if phrase after update_ is valid db attribute (phone_number, email or name)
+			# # if so, turn that phrase plus first argument into a hash
+			# # call update_all(attr: 'value')
+
+			if method_name.match('update_')
+				attribute = method_name.slice(7, method_name.length)
+				if attribute == 'name' || attribute == 'phone_number' || attribute == 'email'
+					update_all({attribute.to_sym => args.first.to_s})
+				end
+			end
+
+			super(method_name, *args)
+		end
 	end
 
+	### OUTSIDE OF THE ClassMethod Module
 	def save!
 		# here we grab all of the column names from the database object's instance variables
 		# and set the column name to the (now SQL-ready) value in a comma-separated list,
