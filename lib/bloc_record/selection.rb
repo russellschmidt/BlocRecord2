@@ -263,8 +263,14 @@ module Selection
 
 	def order(*args)
 		# .count filters for arrays, to_s handles with String, Symbol cases
-		if args.count > 1
-			order = args.join(",")
+		if args.is_a? Array && args.count > 1
+			if args.first.is_a? String
+				order = args.join(",")
+			else
+				order = []
+				args.each{|key, value| order << "#{key.to_s}='#{value.to_s}'"}
+				order = order.join(",")
+			end
 		else
 			order = args.first.to_s
 		end
