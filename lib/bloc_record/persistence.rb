@@ -41,17 +41,17 @@ module Persistence
 			# if updates is an array already, it is the multiple record update case (chkpt 5, q1)
 			if updates.is_a? Array && updates.is_a? Array
 				
-				attributes = updates.each.keys
-				values = updates.each.values
+				attr_array = updates.each.keys
+				val_array = updates.each.values
 
 				# check that we don't have any nil values in 'values'
-				if values.flatten.count < attributes.count
+				if val_array.flatten.count < attr_array.count
 					puts "Cannot update an address book entry to empty or nil value"
 					return false
 				else
 
 					# put ids, updates into an array of arrays [[id1,attr1,val1],[id2,attr2,val2]...]
-					updates_array = ids.zip(attributes, values)
+					updates_array = ids.zip(attr_array, val_array)
 
 					# iterate over the array of arrays
 					# # use 'if' sql statement, format:  
@@ -110,15 +110,19 @@ module Persistence
 		end		
 
 		def method_missing(method_name, *args)
+			# Checkpoint 5, Question 2
 			# find if method_name contains 'update'
 			# check if phrase after update_ is valid db attribute (phone_number, email or name)
 			# # if so, turn that phrase plus first argument into a hash
 			# # call update_all(attr: 'value')
 
 			if method_name.match('update_')
-				attribute = method_name.slice(7, method_name.length)
-				if attribute == 'name' || attribute == 'phone_number' || attribute == 'email'
-					update_all({attribute.to_sym => args.first.to_s})
+				attr = method_name.slice(7, method_name.length)
+				if attributes.include?(attr)
+				# if attr == 'name' || attr == 'phone_number' || attr == 'email'
+					update_all({attr.to_sym => args.first.to_s})
+				else
+					puts "#method_name is not valid, as #{attribute} is not an attribute in the database."
 				end
 			end
 
