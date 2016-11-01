@@ -166,14 +166,6 @@ module Selection
 	end
 
 
-	def method_missing(method, *arguments, &block)
-		if method == "find_by_name"
-			find_by(:name, *arguments)
-		else
-			puts "no such method found"
-		end
-	end
-
 	def find_each(attribute, value, batch_size=nil, &block)
 		# set batch of records to array rows
 		# if batch_size not nil and is an integer and not 0 or less, set Limit on record 
@@ -329,6 +321,15 @@ module Selection
 	end
 
 
+	def method_missing(method, *arguments, &block)
+		if method == "find_by_name"
+			find_by(:name, *arguments)
+		else
+			puts "no such method found"
+		end
+	end
+
+
 	private
 
 	def init_object_from_row(row)
@@ -342,8 +343,8 @@ module Selection
 
 	def rows_to_array(rows)
 		# this method maps an array of rows to an array of matched model objects.
-		# the return is an array of record objects, where each object is from 
-		#rows.map { |row| new(Hash[columns.zip(row)]) }
+		# the return is an array of record objects, where each object is from.
+		# formerly: rows.map { |row| new(Hash[columns.zip(row)]) }
 		collection = BlocRecord::Collection.new
 		rows.each { |row| collection << new(Hash[columns.zip(row)]) }
 		collection

@@ -65,38 +65,6 @@ module Persistence
 		end
 
 
-		def save!
-			# here we grab all of the column names from the database object's instance variables
-			# and set the column name to the (now SQL-ready) value in a comma-separated list,
-			# i.e. 'firstname="Fred", lastname="Smith"' which is passed into the SQL UPDATE command.
-
-			# first we have to check to make sure that id exists - it wouldn't if we just created this 
-			# object and haven't saved it to the db yet (and therefore wouldn't have an assigned id)
-			# So we create the object and save to the database, returning the ID.
-			# Then we reload that same object, now with the proper ID included.
-			unless self.id
-				self.id = self.class.create(BlocRecord::Utility.instance_variables_to_hash(self)).id
-				BlocRecord::Utility.reload_obj(self)
-				return true
-			end
-
-			fields = self.class.attributes.map { |col| "#{col}=#{BlocRecord::Utility.sql_strings(self.instance_variable_get("@#{col}"))}"}.join(",")
-			
-			self.class.connection.execute <<-SQL
-				UPDATE #{self.class.table}
-				SET #{fields}
-				WHERE id = #{self.id};
-			SQL
-
-			true
-		end
-
-
-		def save
-			self.save! rescue false
-		end
-
-
 		def update_all(updates)
 			# we pass in nil for the id which in update will drop the WHERE clause (see: ternary)
 			update(nil, updates)
@@ -110,6 +78,38 @@ module Persistence
 			self.class.update(self.id, { attribute => value })
 		end		
 	end
+
+	def save!
+		# here we grab all of the column names from the database object's instance variables
+		# and set the column name to the (now SQL-ready) value in a comma-separated list,
+		# i.e. 'firstname="Fred", lastname="Smith"' which is passed into the SQL UPDATE command.
+
+		# first we have to check to make sure that id exists - it wouldn't if we just created this 
+		# object and haven't saved it to the db yet (and therefore wouldn't have an assigned id)
+		# So we create the object and save to the database, returning the ID.
+		# Then we reload that same object, now with the proper ID included.
+		unless self.id
+			self.id = self.class.create(BlocRecord::Utility.instance_variables_to_hash(self)).id
+			BlocRecord::Utility.reload_obj(self)
+			return true
+		end
+
+		fields = self.class.attributes.map { |col| "#{col}=#{BlocRecord::Utility.sql_strings(self.instance_variable_get("@#{col}"))}"}.join(",")
+		
+		self.class.connection.execute <<-SQL
+			UPDATE #{self.class.table}
+			SET #{fields}
+			WHERE id = #{self.id};
+		SQL
+
+		true
+	end
+
+
+	def save
+		self.save! rescue false
+	end
+
 
 	def update_attributes(updates)
 		# updates ought to take the form of `attr: "value", attr2: "value2",...`
