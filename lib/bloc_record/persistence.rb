@@ -39,7 +39,7 @@ module Persistence
 
 		def update(ids, updates)
 			# if updates is an array already, it is the multiple record update case (chkpt 5, q1)
-			if updates.is_a? Array && updates.is_a? Array
+			if updates.is_a?(Array) && updates.is_a?(Array)
 				
 				attr_array = updates.each.keys
 				val_array = updates.each.values
@@ -66,6 +66,7 @@ module Persistence
 						SET #{sql_updates.join(",")}
 						WHERE id IN (#{ids.join(",")});
 					SQL
+				end
 
 			else
 				# convert non-id parameters to an array (original checkpoint work)
@@ -90,6 +91,7 @@ module Persistence
 					UPDATE #{table}
 					SET #{updates_array * ","} #{where_clause}
 				SQL
+
 			end
 
 			true
@@ -124,7 +126,7 @@ module Persistence
 			if conditions_hash && !conditions_hash.empty?
 				conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
 				conditions = conditions_hash.map do |key, value| 
-					"#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+					"#{key}=#{BlocRecord::Utility.sql_strings(value)}".join(" and ")
 				end
 
 				connection.execute <<-SQL
