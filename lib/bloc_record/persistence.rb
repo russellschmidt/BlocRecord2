@@ -102,6 +102,46 @@ module Persistence
 		end
 
 
+		def destroy(*id)
+			# does what it says - deletes a record(s). Note similarity to SELECT statement.
+			# Note that there is an Instance Method #destroy in this file also
+			if id.length > 1
+				where_clause = "WHERE id IN (#{id.join(",")});"
+			else
+				where_clause = "WHERE id=#{id.first};"
+			end
+
+			connection.execute <<-SQL
+				DELETE FROM #{table} #{where_clause}
+			SQL
+
+			true
+		end
+
+
+		def destroy_all(conditions_hash=nil)
+			# deletes all records in the table with or w/o conditions
+			if conditions_hash && !conditions_hash.empty?
+				conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
+				conditions = conditions_hash.map do |key, value| 
+					"#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+				end
+
+				connection.execute <<-SQL
+					DELETE FROM #{table}
+					WHERE #{conditions};
+				SQL
+
+			else
+				connection.execute <<-SQL
+					DELETE FROM #{table};
+				SQL
+			end
+
+			true
+		end
+
+
 		def update_attribute(attribute, value)
 			# we pass in the attribute as a symbol
 			# then, we pass in the current object's id and turn the updated attribute and value into a hash
@@ -166,6 +206,12 @@ module Persistence
 	def update_attributes(updates)
 		# updates ought to take the form of `attr: "value", attr2: "value2",...`
 		self.class.update(self.id, updates)
+	end
+
+
+	def destroy
+		# Note that there is a Class Method #destroy in this file also
+		self.class.destroy(self.id)
 	end
 end
 
