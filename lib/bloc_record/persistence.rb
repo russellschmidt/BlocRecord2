@@ -133,6 +133,22 @@ module Persistence
 					DELETE FROM #{table}
 					WHERE #{conditions};
 				SQL
+			elsif conditions_hash.is_a? String
+				# check for proper attributes. remove whitespace
+				conditions = conditions.split(/=/).map {|c| c.strip!}
+				# make sure we have exactly one equal sign and thus an array of 2 items
+				if conditions.count == 2
+					if attributes.include?(conditions.first) && !conditions[1].empty?
+						connection.execute <<-SQL
+							DELETE FROM #{table}
+							WHERE #{conditions[0]}=#{conditions[1]};
+						SQL
+					else
+						puts "That attribute is invalid to delete"
+					end
+				else
+					puts "no equal sign! what are you trying to pull with your delete"
+				end
 
 			else
 				connection.execute <<-SQL
