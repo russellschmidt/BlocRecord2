@@ -74,7 +74,15 @@ module BlocRecord
 				puts "#where method requires a hash argument"
 				false
 			end
-
 		end
+
+		def destroy_all
+			# should take an array of instances and delete all of them
+			# create an array of the ids of the passed in model object
+			ids = self.map(&:id)
+
+			ids.empty? ? puts "Nothing deleted." : self.first.class.destroy(ids)
+		end
+
 	end
 end

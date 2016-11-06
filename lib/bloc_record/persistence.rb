@@ -154,7 +154,7 @@ module Persistence
 					# break up the array, also stripping out leading/trailing whitespace
 					attribute = conditions_hash.first.strip
 					value = conditions_hash.last.strip
-					# make sure attribute is of format 'attribute = ?'
+					# make sure attribute has '=' and '?' and ends in '?' to be of format 'attr = ?'
 					if ( /=?/ =~ attribute ) || ( /= ?/ =~ attribute ) && attribute.index(/\?/) == attribute.count-1
 						# separate out the attribute, compare it to our attributes array
 						attribute_name = attribute.slice(0,attribute.index(/=/)).strip
