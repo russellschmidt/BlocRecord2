@@ -147,9 +147,31 @@ module Persistence
 						puts "That attribute is invalid to delete"
 					end
 				else
-					puts "no equal sign! what are you trying to pull with your delete"
+					puts "No equal sign! What are you trying to pull with your delete?!"
 				end
-
+			elsif conditions_hash.is_a? Array
+				if conditions_hash.count == 2
+					# break up the array, also stripping out leading/trailing whitespace
+					attribute = conditions_hash.first.strip
+					value = conditions_hash.last.strip
+					# make sure attribute is of format 'attribute = ?'
+					if ( /=?/ =~ attribute ) || ( /= ?/ =~ attribute ) && attribute.index(/\?/) == attribute.count-1
+						# separate out the attribute, compare it to our attributes array
+						attribute_name = attribute.slice(0,attribute.index(/=/)).strip
+						if attributes.include? attribute_name
+							connection.execute <<-SQL
+								DELETE FROM #{table}
+								WHERE #{attribute_name}=#{value};
+							SQL
+						else
+							puts 'Sorry, attribute chosen #{attribute_name} is not valid'
+						end
+					else
+						puts 'Attribute is not formatted correctly example: "email = ?" or "email=?"'					
+					end
+				else
+					puts "Array needs to be of format ['phone_number = ?', '999-999-9999']"
+				end
 			else
 				connection.execute <<-SQL
 					DELETE FROM #{table};
