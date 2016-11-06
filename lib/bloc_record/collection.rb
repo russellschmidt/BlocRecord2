@@ -81,7 +81,13 @@ module BlocRecord
 			# create an array of the ids of the passed in model object
 			ids = self.map(&:id)
 
-			ids.empty? ? puts "Nothing deleted." : self.first.class.destroy(ids)
+			if ids.empty?
+				puts "Nothing was deleted." 
+			elsif ids.first.is_nil?
+				puts "No records were found to delete."
+			else
+				self.first.class.destroy(ids)
+			end
 		end
 
 	end
