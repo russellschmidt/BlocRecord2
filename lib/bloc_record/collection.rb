@@ -23,6 +23,21 @@ module BlocRecord
 		end
 
 
+		def distinct
+			# create an array of name: 'values'
+			names = self.map(&:name)
+			# returns a single unique value in the array
+			# not sure to just return `names.uniq.first`... seems too easy 
+			# also not sure this is the unique we are going for as a duplicated value can be returned
+
+			# here we eliminate all entries with duplicates in the closure
+			# map leaves us with an array that wil have nil where any repeating elements used to be
+			# compact deletes these nil elements, and then 
+			# sample returns a remaining unique value at random, default 1 object
+			arr.map{ |x| x unless arr.count(x) > 1 }.compact.sample
+		end
+
+
 		def take(num=1)
 			# create an array of all of the ids in our db
 			# capture a random number
