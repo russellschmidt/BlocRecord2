@@ -1,0 +1,9 @@
+sqlite> SELECT department.department_name, AVG(vacation_days) FROM compensation
+   ...> JOIN professor ON compensation.professor_id = professor.id
+   ...> JOIN department ON professor.department_id = department.id
+   ...> GROUP BY department.department_name;
+Care of Magical Creatures,13.0
+Defence Against the Dark Arts,9.0
+Study of Ancient Runes,8.0
+Transfiguration,2.0
+

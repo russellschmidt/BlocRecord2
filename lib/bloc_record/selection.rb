@@ -27,15 +27,16 @@ module Selection
 		# future implementation - check if id in range and not deleted
 
 		if ids.length == 1
-			if ids.is_a? Integer
-				if ids >= max || ids <= min
-					puts "record id out of range"
-				else
-					find_one(ids.first)
-				end
-			else
-				puts "Invalid id data type"
-			end
+			find_one(ids.first)
+			# if ids.is_a?(Integer) || ids.is_a?(Fixnum)
+				# if ids >= max || ids <= min
+				# 	puts "record id out of range"
+				# else
+					# find_one(ids.first)
+				# end
+			# else
+				# puts "Invalid id data type"
+			# end
 		else
 			ids_in_range = true
 			ids_valid = true
@@ -67,9 +68,10 @@ module Selection
 	def find_one(id)
 		# straight-forward SELECT that returns the row matching the id passed in
 		# By using columns instead of (*) we can manipulate this method later
+
 		row = connection.get_first_row <<-SQL
 			SELECT #{columns.join ","} FROM #{table}
-			WHERE id = #{id};
+			WHERE id=#{id};
 		SQL
 
 		init_object_from_row(row)
@@ -220,6 +222,108 @@ module Selection
 			end
 		else
 			puts "start:, batch_size: arguments can't be nil and must be integers."
+		end
+	end
+
+	def where(*args)
+		# Array - .count here filters for arrays vs other data types
+		#  .shift pops the first element off the array, shrinking it, and returns it
+		# String accepts ("phone_number = '555-222-1010'") input
+		#  with the string case, params is nil. We put the full string in the expression variable
+		# For Hash, we convert Symbols in keys to Strings
+		#  then we convert values to SQL-friendly strings and connect multiple clauses with AND
+		if args.count > 1
+			expression = args.shift
+			params = args
+		else
+			case args.first
+			when String
+				expression = args.first
+			when Hash
+				expression_hash = BlocRecord::Utility.convert_keys(args.first)
+				expression = expression_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" AND ")
+			end
+		end
+
+		sql = <<-SQL
+			SELECT #{columns.join ","} FROM #{table}
+			WHERE #{expression};
+		SQL
+
+		rows = connection.execute(sql, params)
+		rows_to_array(rows)
+	end
+
+	def order(*args)
+		# .count filters for arrays, to_s handles with String, Symbol cases
+		if args.is_a? Array && args.count > 1
+			if args.first.is_a? String
+				order = args.join(",")
+			else
+				order = []
+				args.each{|key, value| order << "#{key.to_s}='#{value.to_s}'"}
+				order = order.join(",")
+			end
+		else
+			order = args.first.to_s
+		end
+
+		# if symbol, we want to clean up "{:foo=>:bar, :doo=>:ood}"
+		order = order.gsub(/[{:}]/,'').gsub(/=>/,' ')
+
+		rows = connection.execute <<-SQL
+			SELECT * FROM #{table}
+			ORDER BY #{order};
+		SQL
+
+		rows_to_array(rows)
+	end
+
+
+	def join(*args)
+		# check for arrays first. 
+		#
+		# elsif is great for hash but requires the table to use standard naming conventions
+		# foreign key -> table1.table2_id = table2.id  <- primary key
+
+		if args.count > 1
+			joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id=#{table}.id" }.join(" ")
+			rows = connection.execute <<-SQL
+				SELECT * FROM #{table} #{joins};
+			SQL
+		else
+			case args.first
+			when String
+				rows = connection.execute <<-SQL
+					SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
+				SQL
+			when Symbol
+				rows = connection.execute <<-SQL
+					SELECT * FROM #{table}
+					INNER JOIN #{args.first} ON #{args.first}.#{table}_id=#{table}.id;
+				SQL
+			end
+		end
+
+		rows_to_array(rows)
+	end
+
+	def joins(*args)
+		# requires naming convention of foreign_key to be table.foreigntable_id = foreigntable.id
+		if args.first.is_a? Hash
+
+			args.each do |key, value|
+				value.to_sym if value.is_a? String
+				joins += "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id "
+				joins += "INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id "
+			end
+
+			rows = connection.execute <<-SQL
+				SELECT * FROM #{table}
+				#{joins};
+			SQL
+		else
+			puts "#joins method requires a hash"
 		end
 	end
 
