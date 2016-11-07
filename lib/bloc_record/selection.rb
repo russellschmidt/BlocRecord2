@@ -324,14 +324,29 @@ module Selection
 	def select(*fields)
 		# This method creates an array of hashes, with each element in the array
 		# equal to {column: "value", column2: "value2"} for a single model object
-		rows = connection.execute <<-SQL
-			SELECT #{fields * ", "} FROM #{table};
-		SQL
 
-		collection = BlocRecord::Collection.new
+		fields.each do |field|
+			if attributes.include? field
+				fields_valid << field
+			else
+				fields_invalid << field
+			end
+		end
 
-		rows.each {|row| collection << new(Hash[fields.zip(row)])}
-		collection
+		# Not sure if the commented out line below would work
+		# if !fields_invalid
+		if fields_valid.count == fields.count
+			rows = connection.execute <<-SQL
+				SELECT #{fields * ", "} FROM #{table};
+			SQL
+
+			collection = BlocRecord::Collection.new
+
+			rows.each {|row| collection << new(Hash[fields.zip(row)])}
+			collection
+		else
+			puts "MissingAttributeError: missing attribute: <#{fields_invalid * ", "}>"
+		end
 	end
 
 
