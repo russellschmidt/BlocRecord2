@@ -16,6 +16,12 @@ module BlocRecord
 			self.any? ? self.first.class.update(ids, updates) : false
 		end
 
+		def group(*args)
+			# note we never define #group_by_ids...
+			ids = self.map(&:id)
+			self.any? ? self.first.class.group_by_ids(ids, args) : false
+		end
+
 
 		def take(num=1)
 			# create an array of all of the ids in our db

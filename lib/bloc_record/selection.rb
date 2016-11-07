@@ -321,6 +321,43 @@ module Selection
 	end
 
 
+	def select(*fields)
+		# This method creates an array of hashes, with each element in the array
+		# equal to {column: "value", column2: "value2"} for a single model object
+		rows = connection.execute <<-SQL
+			SELECT #{fields * ", "} FROM #{table};
+		SQL
+
+		collection = BlocRecord::Collection.new
+
+		rows.each {|row| collection << new(Hash[fields.zip(row)])}
+		collection
+	end
+
+
+	def limit(value, offset=0)
+		# Limit caps the number of records returned by value, an integer
+		# LIMIT returns arbitrary order - be aware
+		rows = connection.execute <<- SQL
+			SELECT * FROM #{table} LIMIT #{value} OFFSET #{offset};
+		SQL
+
+		rows_to_array(rows)
+	end
+
+
+	def group(*args)
+		conditions = args.join(",")
+
+		rows = connection.execute <<-SQL
+			SELECT * FROM #{table}
+			GROUP BY #{conditions};
+		SQL
+
+		rows_to_array(rows)
+	end
+
+
 	def method_missing(method, *arguments, &block)
 		if method == "find_by_name"
 			find_by(:name, *arguments)
