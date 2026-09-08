@@ -39,7 +39,7 @@ module Persistence
 
 		def update(ids, updates)
 			# if updates is an array already, it is the multiple record update case (chkpt 5, q1)
-			if updates.is_a? Array && updates.is_a? Array
+			if updates.is_a?(Array) && updates.is_a?(Array)
 				
 				attr_array = updates.each.keys
 				val_array = updates.each.values
@@ -66,6 +66,7 @@ module Persistence
 						SET #{sql_updates.join(",")}
 						WHERE id IN (#{ids.join(",")});
 					SQL
+				end
 
 			else
 				# convert non-id parameters to an array (original checkpoint work)
@@ -90,6 +91,7 @@ module Persistence
 					UPDATE #{table}
 					SET #{updates_array * ","} #{where_clause}
 				SQL
+
 			end
 
 			true
@@ -99,6 +101,84 @@ module Persistence
 		def update_all(updates)
 			# we pass in nil for the id which in update will drop the WHERE clause (see: ternary)
 			update(nil, updates)
+		end
+
+
+		def destroy(*id)
+			# does what it says - deletes a record(s). Note similarity to SELECT statement.
+			# Note that there is an Instance Method #destroy in this file also
+			if id.length > 1
+				where_clause = "WHERE id IN (#{id.join(",")});"
+			else
+				where_clause = "WHERE id=#{id.first};"
+			end
+
+			connection.execute <<-SQL
+				DELETE FROM #{table} #{where_clause}
+			SQL
+
+			true
+		end
+
+
+		def destroy_all(conditions_hash=nil)
+			# deletes all records in the table with or w/o conditions
+			if conditions_hash && !conditions_hash.empty?
+				conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
+				conditions = conditions_hash.map do |key, value| 
+					"#{key}=#{BlocRecord::Utility.sql_strings(value)}".join(" and ")
+				end
+
+				connection.execute <<-SQL
+					DELETE FROM #{table}
+					WHERE #{conditions};
+				SQL
+			elsif conditions_hash.is_a? String
+				# check for proper attributes. remove whitespace
+				conditions = conditions.split(/=/).map {|c| c.strip!}
+				# make sure we have exactly one equal sign and thus an array of 2 items
+				if conditions.count == 2
+					if attributes.include?(conditions.first) && !conditions[1].empty?
+						connection.execute <<-SQL
+							DELETE FROM #{table}
+							WHERE #{conditions[0]}=#{conditions[1]};
+						SQL
+					else
+						puts "That attribute is invalid to delete"
+					end
+				else
+					puts "No equal sign! What are you trying to pull with your delete?!"
+				end
+			elsif conditions_hash.is_a? Array
+				if conditions_hash.count == 2
+					# break up the array, also stripping out leading/trailing whitespace
+					attribute = conditions_hash.first.strip
+					value = conditions_hash.last.strip
+					# make sure attribute has '=' and '?' and ends in '?' to be of format 'attr = ?'
+					if ( /=?/ =~ attribute ) || ( /= ?/ =~ attribute ) && attribute.index(/\?/) == attribute.count-1
+						# separate out the attribute, compare it to our attributes array
+						attribute_name = attribute.slice(0,attribute.index(/=/)).strip
+						if attributes.include? attribute_name
+							connection.execute <<-SQL
+								DELETE FROM #{table}
+								WHERE #{attribute_name}=#{value};
+							SQL
+						else
+							puts 'Sorry, attribute chosen #{attribute_name} is not valid'
+						end
+					else
+						puts 'Attribute is not formatted correctly example: "email = ?" or "email=?"'					
+					end
+				else
+					puts "Array needs to be of format ['phone_number = ?', '999-999-9999']"
+				end
+			else
+				connection.execute <<-SQL
+					DELETE FROM #{table};
+				SQL
+			end
+
+			true
 		end
 
 
@@ -166,6 +246,12 @@ module Persistence
 	def update_attributes(updates)
 		# updates ought to take the form of `attr: "value", attr2: "value2",...`
 		self.class.update(self.id, updates)
+	end
+
+
+	def destroy
+		# Note that there is a Class Method #destroy in this file also
+		self.class.destroy(self.id)
 	end
 end
 
